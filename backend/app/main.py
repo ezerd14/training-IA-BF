@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import os
+import secrets
 
 import jwt
 from fastapi import FastAPI, HTTPException, status
@@ -8,14 +9,14 @@ from pydantic import BaseModel, ConfigDict, Field
 
 app = FastAPI(title="Backend App", version="1.0.0")
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me-in-production")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(32)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_SECONDS = 300
 REFRESH_TOKEN_EXPIRE_SECONDS = 3600
 ADMIN_USERNAME = "admin"
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ADMIN_PASSWORD_HASH = password_context.hash("admin123")
+ADMIN_PASSWORD_HASH = "$2b$12$ttkS2hPUDvYunkHFkWuy8ucZZ9APfjHcA9eN0/v3XTQmeuht/LBIm"
 
 
 class LoginRequest(BaseModel):
@@ -38,7 +39,12 @@ class TokenResponse(BaseModel):
 
 def create_token(subject: str, token_type: str, expires_in: int) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
-    payload = {"sub": subject, "type": token_type, "exp": expires_at}
+    payload = {
+        "sub": subject,
+        "type": token_type,
+        "exp": expires_at,
+        "jti": secrets.token_hex(16),
+    }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 

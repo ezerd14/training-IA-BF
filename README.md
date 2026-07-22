@@ -96,6 +96,7 @@ curl -X POST http://127.0.0.1:8000/auth/refresh \
 
 ```bash
 cd backend
+export JWT_SECRET_KEY="tu-clave-secreta"
 docker compose up --build
 ```
 
@@ -103,4 +104,5 @@ La aplicación quedará expuesta en `http://127.0.0.1:8000`.
 
 ### Variable de entorno
 
-- `JWT_SECRET_KEY`: clave usada para firmar los JWT. Si no se define, la aplicación usa `change-me-in-production`.
+- `JWT_SECRET_KEY`: clave usada para firmar los JWT. Para `docker compose` es obligatoria.
+- Si no se define en una ejecución local directa con Poetry, la aplicación genera una clave aleatoria temporal al arrancar.

@@ -5,24 +5,33 @@ import secrets
 import jwt
 from fastapi import FastAPI, HTTPException, status
 from passlib.context import CryptContext
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
 app = FastAPI(title="Backend App", version="1.0.0")
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(32)
+
+def get_required_secret_key() -> str:
+    secret_key = os.getenv("JWT_SECRET_KEY")
+    if not secret_key:
+        raise RuntimeError("JWT_SECRET_KEY must be set before starting the application")
+    return secret_key
+
+
+SECRET_KEY = get_required_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_SECONDS = 300
 REFRESH_TOKEN_EXPIRE_SECONDS = 3600
-ADMIN_USERNAME = "admin"
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ADMIN_PASSWORD_HASH = "$2b$12$ttkS2hPUDvYunkHFkWuy8ucZZ9APfjHcA9eN0/v3XTQmeuht/LBIm"
+ADMIN_PASSWORD_HASH = os.getenv(
+    "ADMIN_PASSWORD_HASH",
+    "$2b$12$ttkS2hPUDvYunkHFkWuy8ucZZ9APfjHcA9eN0/v3XTQmeuht/LBIm",
+)
 
 
 class LoginRequest(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    username: str = Field(alias="usuario")
+    usuario: str
     password: str
 
 
@@ -90,7 +99,7 @@ def healthcheck() -> dict[str, str]:
 
 @app.post("/auth/token", response_model=TokenResponse)
 def login(credentials: LoginRequest) -> TokenResponse:
-    if credentials.username != ADMIN_USERNAME or not password_context.verify(
+    if credentials.usuario != ADMIN_USERNAME or not password_context.verify(
         credentials.password, ADMIN_PASSWORD_HASH
     ):
         raise HTTPException(
@@ -98,7 +107,7 @@ def login(credentials: LoginRequest) -> TokenResponse:
             detail="Credenciales inválidas",
         )
 
-    return issue_tokens(credentials.username)
+    return issue_tokens(credentials.usuario)
 
 
 @app.post("/auth/refresh", response_model=TokenResponse)

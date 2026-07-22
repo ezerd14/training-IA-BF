@@ -34,6 +34,7 @@ backend/
 
 ```bash
 cd backend
+export JWT_SECRET_KEY="tu-clave-secreta"
 poetry install
 poetry run uvicorn app.main:app --reload
 ```
@@ -104,5 +105,6 @@ La aplicación quedará expuesta en `http://127.0.0.1:8000`.
 
 ### Variable de entorno
 
-- `JWT_SECRET_KEY`: clave usada para firmar los JWT. Para `docker compose` es obligatoria.
-- Si no se define en una ejecución local directa con Poetry, la aplicación genera una clave aleatoria temporal al arrancar.
+- `JWT_SECRET_KEY`: clave usada para firmar los JWT. Es obligatoria tanto con Poetry como con Docker.
+- `ADMIN_USERNAME`: opcional, por defecto `admin`.
+- `ADMIN_PASSWORD_HASH`: opcional, por defecto corresponde a la contraseña `admin123`.
